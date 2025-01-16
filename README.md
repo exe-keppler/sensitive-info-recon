@@ -12,7 +12,7 @@ Este proyecto está diseñado para realizar análisis de información sensible e
 
 1. Clona este repositorio:
    ```bash
-   git clone https://github.com/tu-usuario/sensitive-info-recon.git
+   git clone https://github.com/exe-keppler/sensitive-info-recon.git
    cd sensitive-info-recon
    ```
 
