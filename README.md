@@ -62,10 +62,6 @@ https://example.com/database.sql
 
 Este script debe usarse únicamente para fines educativos y de investigación con permiso explícito del dominio objetivo.
 
-## Licencia
-
-Este proyecto está bajo la licencia MIT. Consulta el archivo `LICENSE` para más detalles.
-
 ## Contribuciones
 
 Las contribuciones son bienvenidas. Por favor, abre un issue o pull request en este repositorio si tienes ideas o mejoras.
