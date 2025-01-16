@@ -1,71 +1,79 @@
-# Sensitive Info Recon
+import requests
+import re
+import argparse
 
-Este proyecto está diseñado para realizar análisis de información sensible en dominios usando APIs públicas como Web Archive, VirusTotal y AlienVault OTX. 
+def fetch_web_archive(domain):
+    url = "https://web.archive.org/cdx/search/cdx"
+    params = {
+        "url": f"*.{domain}/*",
+        "collapse": "urlkey",
+        "output": "text",
+        "fl": "original"
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        return response.text.splitlines()
+    else:
+        print(f"Error fetching data from Web Archive: {response.status_code}")
+        return []
 
-## Características
+def fetch_virus_total(domain, api_key):
+    url = "https://www.virustotal.com/vtapi/v2/domain/report"
+    params = {
+        "apikey": api_key,
+        "domain": domain
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        return response.json().get("detected_urls", [])
+    else:
+        print(f"Error fetching data from VirusTotal: {response.status_code}")
+        return []
 
-- Recupera URLs relacionadas con un dominio objetivo.
-- Filtra archivos sensibles basados en extensiones comunes mediante expresiones regulares.
-- Automatiza el reconocimiento y clasificación de recursos públicos.
+def fetch_otx(domain):
+    url = f"https://otx.alienvault.com/api/v1/indicators/hostname/{domain}/url_list"
+    params = {"limit": 500, "page": 1}
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        return [url_data.get("url") for url_data in response.json().get("url_list", [])]
+    else:
+        print(f"Error fetching data from OTX: {response.status_code}")
+        return []
 
-## Instalación
+def filter_sensitive_files(urls):
+    sensitive_patterns = re.compile(r'\.(xls|xml|xlsx|json|pdf|sql|doc|docx|pptx|txt|zip|tar\.gz|tgz|bak|7z|rar|log|cache|secret|db|backup|yml|gz|config|csv|yaml|md|md5|exe|dll|bin|ini|bat|sh|tar|deb|rpm|iso|img|apk|msi|dmg|tmp|crt|pem|key|pub|asc)$', re.IGNORECASE)
+    return [url for url in urls if sensitive_patterns.search(url)]
 
-1. Clona este repositorio:
-   ```bash
-   git clone https://github.com/tu-usuario/sensitive-info-recon.git
-   cd sensitive-info-recon
-   ```
 
-2. Instala las dependencias necesarias:
-   ```bash
-   pip install -r requirements.txt
-   ```
+def main():
+    parser = argparse.ArgumentParser(description="Script to analyze sensitive information from domains.")
+    parser.add_argument("-d", "--domain", required=True, help="Domain to analyze (e.g., example.com)")
+    #parser.add_argument("-k", "--apikey", required=True, help="VirusTotal API key")
+    args = parser.parse_args()
 
-## Uso
+    domain = args.domain
+    vt_api_key = args.apikey
 
-Ejecuta el script especificando el dominio y tu API key de VirusTotal:
+    print("Fetching data from Web Archive...")
+    web_archive_urls = fetch_web_archive(domain)
 
-```bash
-python sensitive_info_analyzer.py -d example.com -k <tu_api_key>
-```
+    print("Fetching data from VirusTotal...")
+    virus_total_urls = fetch_virus_total(domain, vt_api_key)
 
-### Parámetros
+    print("Fetching data from OTX...")
+    otx_urls = fetch_otx(domain)
 
-- `-d`, `--domain`: Dominio objetivo a analizar (e.g., `example.com`).
-- `-k`, `--apikey`: API key válida de VirusTotal.
+    all_urls = set(web_archive_urls + virus_total_urls + otx_urls)
 
-## Ejemplo
+    print("Filtering sensitive files...")
+    sensitive_files = filter_sensitive_files(all_urls)
 
-```bash
-python sensitive_info_analyzer.py -d example.com -k XXXXX
-```
+    if sensitive_files:
+        print("Found sensitive files:")
+        for file in sensitive_files:
+            print(file)
+    else:
+        print("No sensitive files found.")
 
-## Salida esperada
-
-El script mostrará las URLs relacionadas con archivos sensibles, como:
-
-```
-Found sensitive files:
-https://example.com/config.json
-https://example.com/backup.zip
-https://example.com/database.sql
-```
-
-## Dependencias
-
-- Python 3.8 o superior
-- Módulos:
-  - `requests`
-  - `argparse`
-
-## Advertencia
-
-Este script debe usarse únicamente para fines educativos y de investigación con permiso explícito del dominio objetivo.
-
-## Licencia
-
-Este proyecto está bajo la licencia MIT. Consulta el archivo `LICENSE` para más detalles.
-
-## Contribuciones
-
-Las contribuciones son bienvenidas. Por favor, abre un issue o pull request en este repositorio si tienes ideas o mejoras.
+if __name__ == "__main__":
+    main()
