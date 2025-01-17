@@ -48,7 +48,7 @@ def filter_sensitive_files(urls):
 def main():
     parser = argparse.ArgumentParser(description="Script to analyze sensitive information from domains.")
     parser.add_argument("-d", "--domain", required=True, help="Domain to analyze (e.g., example.com)")
-    #parser.add_argument("-k", "--apikey", required=True, help="VirusTotal API key")
+    parser.add_argument("-k", "--apikey", required=True, help="VirusTotal API key")
     args = parser.parse_args()
 
     domain = args.domain
